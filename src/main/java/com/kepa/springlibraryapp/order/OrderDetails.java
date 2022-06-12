@@ -1,14 +1,19 @@
 package com.kepa.springlibraryapp.order;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
-import org.hibernate.validator.constraints.Length;
 
 @Entity
+@Getter
+@NoArgsConstructor
 public class OrderDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,19 +25,8 @@ public class OrderDetails {
     @Length(min = 9, max = 13)
     private String telephone;
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
+    OrderDetails(final String address, final String telephone) {
         this.address = address;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
         this.telephone = telephone;
     }
 }

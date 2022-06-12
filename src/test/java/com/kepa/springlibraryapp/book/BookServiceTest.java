@@ -1,14 +1,15 @@
 package com.kepa.springlibraryapp.book;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -24,9 +25,8 @@ class BookServiceTest {
     BookService bookService;
 
 
-
     @Test
-    void findAllTest() {
+    void findAll_shouldCallFindAllInRepository() {
         //given
         given(bookRepository.findAll()
                 .stream()
@@ -42,24 +42,31 @@ class BookServiceTest {
     }
 
     @Test
-    void findByIdTest() {
+    void findByIdTest_shouldPassParams() {
         //given
         Long id = 1L;
-        Book bookEntity = new Book();
-        bookEntity.setName("test");
+        Book bookEntity = new Book(
+                "ISBN",
+                "name",
+                "author",
+                BookCategory.HORROR,
+                22.22,
+                222,
+                "description",
+                50,
+                "url"
+        );
         given(bookRepository.findById(id)).willReturn(Optional.of(bookEntity));
 
         //when
-        BookDto book = bookService.findById(id);
+        bookService.findById(id);
 
         //then
         then(bookRepository).should().findById(id);
-        assertThat(book).isNotNull();
-        assertThat(book.getName()).isEqualTo("test");
     }
 
     @Test
-    void findAllByNameOrAuthor() {
+    void findAllByNameOrAuthor_shouldPassParams() {
         //given
         String text = "test";
         given(bookRepository.findAllByNameOrAuthor(text)

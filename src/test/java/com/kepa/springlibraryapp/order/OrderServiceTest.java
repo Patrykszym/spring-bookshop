@@ -5,10 +5,6 @@ import com.kepa.springlibraryapp.book.BookRepository;
 import com.kepa.springlibraryapp.user.User;
 import com.kepa.springlibraryapp.user.UserRepository;
 import com.kepa.springlibraryapp.user.UserService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,8 +12,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -49,11 +52,20 @@ class OrderServiceTest {
 
 
     @Test
-    void addBookToOrderTest() {
+    void addBookToOrder_shouldPassParams() {
         //given
         Long id = 1L;
-        Book bookEntity = new Book();
-        bookEntity.setName("test");
+        Book bookEntity = new Book(
+                null,
+                "test",
+                null,
+                null,
+                null,
+                222,
+                null,
+                100,
+                null
+        );
         given(bookRepository.findById(id)).willReturn(Optional.of(bookEntity));
 
         //when
@@ -67,20 +79,18 @@ class OrderServiceTest {
     }
 
     @Test
-    void deleteBookFromOrder() {
+    void deleteBookFromOrder_shouldCallGetOrder() {
         //given
         Long id = 1L;
-        Order order = new Order();
         List<Book> books = new ArrayList<>();
         Book book1 = new Book();
-        book1.setPrice(8.00);
         Book book2 = new Book();
-        book2.setPrice(1.24);
         books.add(book1);
         books.add(book2);
-        order.setBooks(books);
-
+        OrderDto order = new OrderDto();
+        ReflectionTestUtils.setField(order, "books", books);
         given(clientOrder.getOrder()).willReturn(order);
+
         //when
         orderService.deleteBookFromOrder(id);
 
@@ -90,40 +100,38 @@ class OrderServiceTest {
 
 
     @Test
-    void proceedOrderTest() {
+    void proceedOrder_shouldPassParams() {
         //given
         Authentication authentication = auth();
-        OrderDetails orderDetails = new OrderDetails();
-        Order order = new Order();
+        OrderDetailsDto orderDetails = new OrderDetailsDto("test", "777124214");
+        OrderDto order = new OrderDto();
         given(userRepository.findByEmailOpt(authentication.getName())).willReturn(Optional.of(new User()));
         given(clientOrder.getOrder()).willReturn(order);
 
         //when
-        orderService.proceedOrder(orderDetails,authentication);
+        orderService.proceedOrder(orderDetails, authentication);
 
         //then
         then(userRepository).should().findByEmailOpt(authentication.getName());
-        then(userRepository).should().findByEmailOpt(authentication.getName()+"@github.com");
-        then(orderDetailsRepository).should().save(orderDetails);
+        then(userRepository).should().findByEmailOpt(authentication.getName() + "@github.com");
+        then(orderDetailsRepository).should().save(any());
         then(clientOrder).should().getOrder();
-        then(orderRepository).should().save(order);
+        then(orderRepository).should().save(any());
         then(clientOrder).should().clear();
     }
 
     @Test
-    void sumOrderCostTest() {
+    void sumOrderCost_shouldCallGetOrderAndSumOrderPrice() {
         //given
-        Order order = new Order();
         List<Book> books = new ArrayList<>();
         Book book1 = new Book();
-        book1.setPrice(8.00);
+        ReflectionTestUtils.setField(book1, "price", 8.00);
         Book book2 = new Book();
-        book2.setPrice(1.24);
+        ReflectionTestUtils.setField(book2, "price", 1.24);
         books.add(book1);
         books.add(book2);
-
-        order.setBooks(books);
-
+        OrderDto order = new OrderDto();
+        ReflectionTestUtils.setField(order, "books", books);
         given(clientOrder.getOrder()).willReturn(order);
 
         //when

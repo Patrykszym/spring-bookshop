@@ -1,9 +1,7 @@
 package com.kepa.springlibraryapp.order;
 
 import com.kepa.springlibraryapp.book.Book;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,39 +9,29 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Controller
-public class OrderPanelController {
-    private OrderRepository orderRepository;
+import java.util.Optional;
 
-    @Autowired
-    public OrderPanelController(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
+@Controller
+@RequiredArgsConstructor
+class OrderPanelController {
+    private final OrderPanelService orderPanelService;
+
     @GetMapping("/panel/orders")
-    public String getOrders(@RequestParam(required = false) OrderStatus status,
-                            Model model) {
-        List<Order> orders;
-        if(status == null)
-            orders = orderRepository.findAll();
-        else
-            orders = orderRepository.findAllByStatus(status);
-        model.addAttribute("orders", orders);
+    String getOrders(@RequestParam(required = false) OrderStatus status, Model model) {
+        model.addAttribute("orders", orderPanelService.getOrders(status));
         return "panel/orders";
     }
+
     @GetMapping("/panel/order/{id}")
-    public String singleOrder(@PathVariable Long id, Model model) {
-        Optional<Order> order = orderRepository.findById(id);
+    String singleOrder(@PathVariable Long id, Model model) {
+        Optional<Order> order = orderPanelService.findById(id);
         return order.map(o -> singleOrderPanel(o, model))
                 .orElse("redirect:/");
     }
 
     @PostMapping("/panel/order/{id}")
-    public String changeOrderStatus(@PathVariable Long id, Model model) {
-        Optional<Order> order = orderRepository.findById(id);
-        order.ifPresent(o -> {
-            o.setStatus(OrderStatus.nextStatus(o.getStatus()));
-            orderRepository.save(o);
-        });
+    String changeOrderStatus(@PathVariable Long id, Model model) {
+        Optional<Order> order = orderPanelService.changeOrderStatusToNext(id);
         return order.map(o -> singleOrderPanel(o, model))
                 .orElse("redirect:/");
     }

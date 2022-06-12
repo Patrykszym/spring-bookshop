@@ -5,33 +5,26 @@ import com.kepa.springlibraryapp.book.BookRepository;
 import com.kepa.springlibraryapp.user.User;
 import com.kepa.springlibraryapp.user.UserRepository;
 import com.kepa.springlibraryapp.user.UserService;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-@Service
-public class OrderService {
-    private ClientOrder clientOrder;
-    private BookRepository bookRepository;
-    private OrderRepository orderRepository;
-    private UserRepository userRepository;
-    private UserService userService;
-    private OrderDetailsRepository orderDetailsRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-    @Autowired
-    public OrderService(ClientOrder clientOrder, BookRepository bookRepository, OrderRepository orderRepository, UserRepository userRepository, UserService userService, OrderDetailsRepository orderDetailsRepository) {
-        this.clientOrder = clientOrder;
-        this.bookRepository = bookRepository;
-        this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.userService = userService;
-        this.orderDetailsRepository = orderDetailsRepository;
-    }
+@Service
+@RequiredArgsConstructor
+class OrderService {
+    private final ClientOrder clientOrder;
+    private final BookRepository bookRepository;
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final UserService userService;
+    private final OrderDetailsRepository orderDetailsRepository;
+
 
     public Optional<Book> addBookToOrder(Long bookId) {
         Optional<Book> book = bookRepository.findById(bookId);
@@ -42,11 +35,11 @@ public class OrderService {
 
     public void deleteBookFromOrder(Long bookIndex) {
         int index = bookIndex.intValue();
-        Order order = clientOrder.getOrder();
+        OrderDto order = clientOrder.getOrder();
         order.getBooks().remove(index);
     }
 
-    public void proceedOrder(OrderDetails orderDetails, Authentication authentication) {
+    public void proceedOrder(OrderDetailsDto orderDetailsDto, Authentication authentication) {
 
         String email = null;
         if (authentication != null)
@@ -55,25 +48,36 @@ public class OrderService {
         Optional<User> user = userRepository.findByEmailOpt(email);
         Optional<User> userGithub = userRepository.findByEmailOpt(email + "@github.com");
 
+        OrderDetails orderDetails = new OrderDetails(
+                orderDetailsDto.getAddress(),
+                orderDetailsDto.getTelephone()
+        );
         orderDetailsRepository.save(orderDetails);
 
-        Order order = clientOrder.getOrder();
+        OrderDto order = clientOrder.getOrder();
         order.setOrderDetails(orderDetails);
 
         user.ifPresent(order::setUser);
         userGithub.ifPresent(order::setUser);
 
-        if (!user.isPresent() && !userGithub.isPresent())
+        if (user.isEmpty() && userGithub.isEmpty())
             order.setUser(OAuth2UserToUser(authentication, email));
 
         updateStock(order.getBooks());
 
-        orderRepository.save(order);
+        orderRepository.save(
+                new Order(
+                        order.getUser(),
+                        order.getBooks(),
+                        order.getOrderDetails(),
+                        order.getStatus()
+                )
+        );
         clientOrder.clear();
     }
 
     public double sumOrderCost(){
-        Order order = clientOrder.getOrder();
+        OrderDto order = clientOrder.getOrder();
         return order
                 .getBooks().stream()
                 .mapToDouble(Book::getPrice)
@@ -82,8 +86,7 @@ public class OrderService {
 
     private void updateStock(List<Book> books) {
         books.forEach(book -> {
-            int stock = book.getStock();
-            book.setStock(stock - 1);
+            book.lowerStockByOne();
             bookRepository.save(book);
         });
     }

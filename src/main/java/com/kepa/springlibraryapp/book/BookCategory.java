@@ -1,5 +1,5 @@
 package com.kepa.springlibraryapp.book;
 
-public enum BookCategory {
+enum BookCategory {
     HORROR, MEMOIR, MYSTERY
 }

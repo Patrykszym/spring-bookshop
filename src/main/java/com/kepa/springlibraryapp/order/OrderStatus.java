@@ -1,9 +1,10 @@
 package com.kepa.springlibraryapp.order;
 
-public enum OrderStatus {
+enum OrderStatus {
     NEW,
     IN_PROGRESS,
     COMPLETE;
+
     static OrderStatus nextStatus(OrderStatus status) {
         if (status == NEW)
             return IN_PROGRESS;

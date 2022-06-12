@@ -6,20 +6,16 @@ import org.springframework.web.context.annotation.SessionScope;
 
 @Component
 @SessionScope
-public class ClientOrder {
+class ClientOrder {
 
-    private Order order;
+    private OrderDto order;
 
     public ClientOrder() {
         clear();
     }
 
-    Order getOrder() {
+    OrderDto getOrder() {
         return order;
-    }
-
-    public void setOrder(Order order) {
-        this.order = order;
     }
 
     void add(Book book) {
@@ -27,7 +23,7 @@ public class ClientOrder {
     }
 
     void clear() {
-        order = new Order();
+        order = new OrderDto();
         order.setStatus(OrderStatus.NEW);
     }
 }

@@ -1,30 +1,27 @@
 package com.kepa.springlibraryapp.book;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Controller
-public class BookController {
-    private BookService bookService;
+import java.util.List;
 
-    @Autowired
-    public BookController(BookService bookService) {
-        this.bookService = bookService;
-    }
+@Controller
+@RequiredArgsConstructor
+class BookController {
+    private final BookService bookService;
 
     @GetMapping("/book")
-    public String book(@RequestParam Long bookId, Model model) {
-        BookDto book= bookService.findById(bookId);
+    String book(@RequestParam Long bookId, Model model) {
+        BookDto book = bookService.findById(bookId);
         model.addAttribute("book", book);
         return "bookView";
     }
 
     @GetMapping("/")
-    public String findAll(Model model,@RequestParam(value = "text",required = false) String text) {
+    String findAll(Model model, @RequestParam(value = "text", required = false) String text) {
         List<BookDto> books;
         if (text != null)
             books = bookService.findAllByNameOrAuthor(text);

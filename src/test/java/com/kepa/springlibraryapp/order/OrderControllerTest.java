@@ -1,7 +1,6 @@
 package com.kepa.springlibraryapp.order;
 
 import com.kepa.springlibraryapp.book.Book;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +13,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -22,9 +23,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
@@ -57,13 +56,15 @@ class OrderControllerTest {
     }
 
     @Test
-    void addBookToOrderTest() {
+    void addBookToOrder_shouldReturnMessageViewAndPassParams() {
         //given
-        Long bookId=1L;
-        given(orderService.addBookToOrder(bookId)).willReturn(Optional.of(new Book()));
+        Long bookId = 1L;
+        given(orderService.addBookToOrder(bookId)).willReturn(Optional.of(new Book(
+
+        )));
 
         //when
-        String view = controller.addBookToOrder(bookId,model);
+        String view = controller.addBookToOrder(bookId, model);
 
         //then
         then(orderService).should().addBookToOrder(bookId);
@@ -72,13 +73,13 @@ class OrderControllerTest {
     }
 
     @Test
-    void addBookToOrderNotFoundTest() {
+    void addBookToOrder_shouldReturnMessageViewAndPassParams_whenBookNotFound() {
         //given
-        Long bookId=1L;
+        Long bookId = 1L;
         given(orderService.addBookToOrder(bookId)).willReturn(Optional.empty());
 
         //when
-        String view = controller.addBookToOrder(bookId,model);
+        String view = controller.addBookToOrder(bookId, model);
 
         //then
         then(orderService).should().addBookToOrder(bookId);
@@ -87,20 +88,20 @@ class OrderControllerTest {
     }
 
     @Test
-    void addBookToOrderControllerTest() throws Exception {
-        mockMvc.perform((get("/order-add")).param("bookId","1"))
+    void addBookToOrder_shouldReturn200AndAViewContainingMessage() throws Exception {
+        mockMvc.perform((get("/order-add")).param("bookId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("message"))
                 .andExpect(view().name("message"));
     }
 
     @Test
-    void deleteBookFromOrderTest() {
+    void deleteBookFromOrder_shouldReturnOrderView() {
         //given
-        Long bookId=1L;
+        Long bookId = 1L;
 
         //when
-        String view = controller.deleteBookFromOrder(bookId,model);
+        String view = controller.deleteBookFromOrder(bookId, model);
 
         //then
         then(orderService).should().deleteBookFromOrder(bookId);
@@ -109,8 +110,8 @@ class OrderControllerTest {
     }
 
     @Test
-    void deleteBookFromOrderControllerTest() throws Exception {
-        mockMvc.perform((get("/order-delete")).param("bookIndex","1"))
+    void deleteBookFromOrder_shouldReturn200AndAViewContainingOrderSumAndDetails() throws Exception {
+        mockMvc.perform((get("/order-delete")).param("bookIndex", "1"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist("order"))
                 .andExpect(model().attributeExists("sum"))
@@ -119,7 +120,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void getCurrentOrderTest() {
+    void getCurrentOrder_shouldReturnOrderView() {
         //when
         String view = controller.getCurrentOrder(model);
 
@@ -129,7 +130,7 @@ class OrderControllerTest {
     }
 
     @Test
-    void getCurrentOrderControllerTest() throws Exception {
+    void getCurrentOrder_shouldReturn200AndAViewContainingOrderSumAndDetails() throws Exception {
         mockMvc.perform((get("/order")))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist("order"))
@@ -139,36 +140,35 @@ class OrderControllerTest {
     }
 
     @Test
-    void proceedOrderTest() {
+    void proceedOrder_shouldReturnMessageViewAndPassParams() {
         //given
-        OrderDetails orderDetails = new OrderDetails();
-        orderDetails.setAddress("test");
-        orderDetails.setTelephone("777124214");
+        OrderDetailsDto orderDetails = new OrderDetailsDto("test", "777124214");
 
         //when
-        String view = controller.proceedOrder(model,orderDetails,bindingResult,authentication);
+        String view = controller.proceedOrder(model, orderDetails, bindingResult, authentication);
 
         //then
-        then(orderService).should().proceedOrder(orderDetails,authentication);
+        then(orderService).should()
+                .proceedOrder(orderDetails, authentication);
         then(model).should().addAttribute(anyString(), any());
         assertThat("message").isEqualToIgnoringCase(view);
     }
 
     @Test
-    void proceedOrderValidTest() throws Exception {
+    void proceedOrder_shouldReturn200AndMessageViewContainingMessage_whenParamsValid() throws Exception {
         mockMvc.perform((post("/order-finalize"))
-                    .param("address","Not empty")
-                    .param("telephone","876868122"))
+                        .param("address", "Not empty")
+                        .param("telephone", "876868122"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("message"))
                 .andExpect(view().name("message"));
     }
 
     @Test
-    void proceedOrderNotValidTest() throws Exception {
+    void proceedOrder_shouldReturn200AndOrderViewContainingOrderAndOrderSum_whenParamsInvalid() throws Exception {
         mockMvc.perform((post("/order-finalize"))
-                .param("address","Not empty")
-                .param("telephone","2224"))
+                        .param("address", "Not empty")
+                        .param("telephone", "2224"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist("order"))
                 .andExpect(model().attributeExists("sum"))
