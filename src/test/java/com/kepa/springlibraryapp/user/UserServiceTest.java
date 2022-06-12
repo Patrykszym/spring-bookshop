@@ -2,13 +2,13 @@ package com.kepa.springlibraryapp.user;
 
 import com.kepa.springlibraryapp.order.Order;
 import com.kepa.springlibraryapp.order.OrderRepository;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static com.kepa.springlibraryapp.user.UserService.DEFAULT_ROLE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -125,9 +124,9 @@ class UserServiceTest {
         User userEntity = new User();
         List<Order> orders = new ArrayList<>();
         Order order1 = new Order();
-        order1.setId(1L);
+        ReflectionTestUtils.setField(order1, "id", 1L);
         Order order2 = new Order();
-        order2.setId(2L);
+        ReflectionTestUtils.setField(order2, "id", 2L);
         orders.add(order1);
         orders.add(order2);
         userEntity.setOrders(orders);
